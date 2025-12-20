@@ -2,6 +2,7 @@
 <section name="Workbench">
 	<section name="MavenProjectImportWizardPage">
 		<list key="rootDirectory">
+			<item value="C:\Users\jose\Desktop\banco-fintech\conta-transf"/>
 			<item value="C:\Users\jose\Desktop\banco-fintech\cliente"/>
 		</list>
 		<list key="projectNameTemplate">
