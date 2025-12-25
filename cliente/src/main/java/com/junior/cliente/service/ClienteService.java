@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.junior.cliente.DTO.ClienteRequestDTO;
 import com.junior.cliente.DTO.ClienteResponseDTO;
 import com.junior.cliente.entities.Cliente;
+import com.junior.cliente.exception.BusinessException;
 import com.junior.cliente.repository.ClienteRepository;
 
 @Service
@@ -23,9 +24,10 @@ public class ClienteService {
 	public ClienteResponseDTO create(ClienteRequestDTO request) {
 
 		if (repository.existsByCpf(request.cpf())) {
-			throw new IllegalArgumentException("CPF já cadastrado");
+		    throw new BusinessException("CPF já cadastrado");
 		}
 
+		
 		Cliente cliente = new Cliente();
 		cliente.setName(request.name());
 		cliente.setCpf(request.cpf());
