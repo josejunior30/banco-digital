@@ -1,7 +1,7 @@
 package com.junior.cliente.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.junior.cliente.DTO.ClienteRequestDTO;
@@ -39,11 +40,13 @@ public class ClienteController {
 		return ResponseEntity.ok(service.findById(id));
 	}
 
-	@GetMapping
-	public ResponseEntity<List<ClienteResponseDTO>> findAll() {
-		return ResponseEntity.ok(service.findAll());
-	}
-
+    @GetMapping
+    public ResponseEntity<Page<ClienteResponseDTO>> findAll(
+            @RequestParam(required = false) Boolean active,
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(service.findAll(active, pageable));
+    }
 	@PutMapping("/{id}")
 	public ResponseEntity<ClienteResponseDTO> update(@PathVariable Long id,
 			@Valid @RequestBody ClienteRequestDTO request) {

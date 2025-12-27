@@ -2,6 +2,8 @@ package com.junior.cliente.DTO;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,7 +18,7 @@ public record ClienteRequestDTO(
 
 		@NotBlank(message = "Email é obrigatório") @Email(message = "Email inválido") String email,
 
-		@NotNull(message = "Data de nascimento é obrigatória") @Past(message = "Data de nascimento deve ser no passado") LocalDate birthDate
+		@NotNull(message = "Data de nascimento é obrigatória") @Past(message = "Data de nascimento deve ser no passado") @JsonFormat(pattern = "dd/MM/yyyy") LocalDate birthDate
 
 ) {
 }
