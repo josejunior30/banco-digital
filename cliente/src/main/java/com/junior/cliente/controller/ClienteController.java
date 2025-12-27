@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +17,8 @@ import com.junior.cliente.DTO.ClienteRequestDTO;
 import com.junior.cliente.DTO.ClienteResponseDTO;
 import com.junior.cliente.service.ClienteService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/clientes")
 public class ClienteController {
@@ -29,7 +30,7 @@ public class ClienteController {
 	}
 
 	@PostMapping
-	public ResponseEntity<ClienteResponseDTO> create(@Validated @RequestBody ClienteRequestDTO request) {
+	public ResponseEntity<ClienteResponseDTO> create(@Valid @RequestBody ClienteRequestDTO request) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
 	}
 
@@ -44,8 +45,8 @@ public class ClienteController {
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<ClienteResponseDTO> update(@Validated @PathVariable Long id,
-			@RequestBody ClienteRequestDTO request) {
+	public ResponseEntity<ClienteResponseDTO> update(@PathVariable Long id,
+			@Valid @RequestBody ClienteRequestDTO request) {
 		return ResponseEntity.ok(service.update(id, request));
 	}
 
