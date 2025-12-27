@@ -24,10 +24,9 @@ public class ClienteService {
 	public ClienteResponseDTO create(ClienteRequestDTO request) {
 
 		if (repository.existsByCpf(request.cpf())) {
-		    throw new BusinessException("CPF já cadastrado");
+			throw new BusinessException("CPF já cadastrado");
 		}
 
-		
 		Cliente cliente = new Cliente();
 		cliente.setName(request.name());
 		cliente.setCpf(request.cpf());
@@ -65,12 +64,11 @@ public class ClienteService {
 		return toResponse(updated);
 	}
 
+	@Transactional
 	public void delete(Long id) {
-
 		if (!repository.existsById(id)) {
-
+			throw new IllegalArgumentException("Cliente não encontrado com id: " + id);
 		}
-
 		repository.deleteById(id);
 	}
 
