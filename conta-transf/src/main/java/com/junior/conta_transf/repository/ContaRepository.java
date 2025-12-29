@@ -6,4 +6,6 @@ import com.junior.conta_transf.entities.Conta;
 
 public interface ContaRepository extends JpaRepository<Conta, Long> {
 
+	boolean existsByNumber(String formatted);
+
 }
