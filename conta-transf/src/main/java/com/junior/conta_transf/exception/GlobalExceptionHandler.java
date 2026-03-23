@@ -2,11 +2,10 @@ package com.junior.conta_transf.exception;
 
 import java.time.Instant;
 import java.util.List;
-
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.messaging.handler.annotation.support.MethodArgumentNotValidException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -46,21 +45,36 @@ public class GlobalExceptionHandler {
                 null
         );
     }
-
-    @ExceptionHandler(IllegalStateException.class)
-    public org.springframework.http.ResponseEntity<ApiError> handleIllegalState(
-            IllegalStateException ex,
+    @ExceptionHandler(ExternalServiceUnavailableException.class)
+    public org.springframework.http.ResponseEntity<ApiError> handleExternalServiceUnavailable(
+            ExternalServiceUnavailableException ex,
             HttpServletRequest request
     ) {
         return build(
-                HttpStatus.CONFLICT,
-                "Estado inválido",
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "Serviço indisponível",
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+    }
+    @ExceptionHandler(ClienteNaoEncontradoException.class)
+    public org.springframework.http.ResponseEntity<ApiError> handleClienteNaoEncontrado(
+            ClienteNaoEncontradoException ex,
+            HttpServletRequest request
+    ) {
+        return build(
+                HttpStatus.NOT_FOUND,
+                "Cliente não encontrado",
                 ex.getMessage(),
                 request.getRequestURI(),
                 null
         );
     }
 
+
+
+    
     @ExceptionHandler(DataIntegrityViolationException.class)
     public org.springframework.http.ResponseEntity<ApiError> handleDataIntegrity(
             DataIntegrityViolationException ex,

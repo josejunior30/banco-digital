@@ -10,7 +10,8 @@ import com.junior.conta_transf.config.FeignClientConfig;
 @FeignClient(
 		    name = "cliente-service",
 		    url = "${cliente.service.url}",
-		    configuration = FeignClientConfig.class
+		    configuration = FeignClientConfig.class,
+		    fallbackFactory = IntegrationClientFallbackFactory.class
 		)
 		public interface IntegrationClient {
 

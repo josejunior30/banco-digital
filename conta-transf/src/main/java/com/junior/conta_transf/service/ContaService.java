@@ -1,5 +1,4 @@
 package com.junior.conta_transf.service;
-
 import java.math.BigDecimal;
 
 import org.slf4j.Logger;
@@ -9,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import com.junior.conta_transf.DTO.ClientValidationResponse;
 import com.junior.conta_transf.DTO.ContaPatchRequestDTO;
 import com.junior.conta_transf.DTO.ContaRequestDTO;
@@ -16,7 +16,9 @@ import com.junior.conta_transf.DTO.ContaResponseDTO;
 import com.junior.conta_transf.entities.Conta;
 import com.junior.conta_transf.enuns.ContaStatus;
 import com.junior.conta_transf.exception.BusinessException;
-import com.junior.conta_transf.integration.IntegrationClient;
+import com.junior.conta_transf.exception.ClienteNaoEncontradoException;
+import com.junior.conta_transf.exception.ExternalServiceUnavailableException;
+import com.junior.conta_transf.integration.ClienteGateway;
 import com.junior.conta_transf.repository.ContaRepository;
 import com.junior.conta_transf.utilidades.GeradorNumeroContaUtils;
 
@@ -26,11 +28,11 @@ public class ContaService {
     private static final Logger log = LoggerFactory.getLogger(ContaService.class);
 
     private final ContaRepository repository;
-    private final IntegrationClient integrationClient;
+    private final ClienteGateway clienteGateway;
 
-    public ContaService(ContaRepository repository, IntegrationClient integrationClient) {
+    public ContaService(ContaRepository repository, ClienteGateway clienteGateway) {
         this.repository = repository;
-        this.integrationClient = integrationClient;
+        this.clienteGateway = clienteGateway;
     }
 
     @Transactional(readOnly = true)
@@ -68,20 +70,26 @@ public class ContaService {
 
         ClientValidationResponse cliente;
         try {
-            cliente = integrationClient.findById(requestDTO.clienteId());
+            cliente = clienteGateway.buscarClientePorId(requestDTO.clienteId());
+
+            log.info("create - cliente validado id={} active={}",
+                    cliente.id(), cliente.active());
+
+        } catch (ClienteNaoEncontradoException e) {
+            log.warn("create - cliente não encontrado clienteId={}", requestDTO.clienteId());
+            throw e;
+
+        } catch (ExternalServiceUnavailableException e) {
+            log.error("create - cliente-service indisponível clienteId={}", requestDTO.clienteId(), e);
+            throw e;
+
         } catch (Exception e) {
-            log.error("create - erro chamando cliente-service clienteId={}", requestDTO.clienteId(), e);
-            throw new BusinessException("Falha na validação do cliente. id=" + requestDTO.clienteId(), e);
+            log.error("create - erro inesperado ao validar clienteId={}", requestDTO.clienteId(), e);
+            throw new BusinessException("Falha inesperada na validação do cliente. id=" + requestDTO.clienteId(), e);
         }
-
-        if (cliente == null) {
-            log.warn("create - cliente-service retornou null para clienteId={}", requestDTO.clienteId());
-            throw new BusinessException("Cliente não encontrado. id=" + requestDTO.clienteId());
-        }
-
-        log.info("create - cliente validado id={} active={}", cliente.id(), cliente.active());
 
         if (!cliente.active()) {
+            log.warn("create - cliente inativo clienteId={}", requestDTO.clienteId());
             throw new BusinessException("Cliente inativo. id=" + requestDTO.clienteId());
         }
 
@@ -99,7 +107,6 @@ public class ContaService {
 
         return saved;
     }
-
     @Transactional
     public Conta patchTypeStatus(Long id, ContaPatchRequestDTO requestDTO) {
         if (id == null) throw new IllegalArgumentException("id é obrigatório");
