@@ -20,6 +20,7 @@ import com.junior.cliente.DTO.ApiError;
 import com.junior.cliente.DTO.ClienteRequestDTO;
 import com.junior.cliente.exception.BusinessException;
 import com.junior.cliente.exception.GlobalExceptionHandler;
+import com.junior.cliente.exception.ResourceNotFoundException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -66,12 +67,31 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void handleNotFound_deveRetornar404() {
+        HttpServletRequest req = Mockito.mock(HttpServletRequest.class);
+        Mockito.when(req.getRequestURI()).thenReturn("/clientes/10");
+
+        ResponseEntity<ApiError> response =
+                handler.handleNotFound(new ResourceNotFoundException("Cliente não encontrado com id: 10"), req);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(404);
+
+        ApiError body = response.getBody();
+        assertThat(body).isNotNull();
+        assertThat(body.status()).isEqualTo(404);
+        assertThat(body.error()).isEqualTo("Not Found");
+        assertThat(body.message()).isEqualTo("Cliente não encontrado com id: 10");
+        assertThat(body.path()).isEqualTo("/clientes/10");
+        assertThat(body.timestamp()).isNotNull();
+    }
+
+    @Test
     void handleIllegalArgument_deveRetornar400() {
         HttpServletRequest req = Mockito.mock(HttpServletRequest.class);
         Mockito.when(req.getRequestURI()).thenReturn("/clientes/10");
 
         ResponseEntity<ApiError> response =
-                handler.handleIllegalArgument(new IllegalArgumentException("Cliente não encontrado com id: 10"), req);
+                handler.handleIllegalArgument(new IllegalArgumentException("invalido"), req);
 
         assertThat(response.getStatusCode().value()).isEqualTo(400);
 
@@ -79,7 +99,7 @@ class GlobalExceptionHandlerTest {
         assertThat(body).isNotNull();
         assertThat(body.status()).isEqualTo(400);
         assertThat(body.error()).isEqualTo("Bad Request");
-        assertThat(body.message()).isEqualTo("Cliente não encontrado com id: 10");
+        assertThat(body.message()).isEqualTo("invalido");
         assertThat(body.path()).isEqualTo("/clientes/10");
         assertThat(body.timestamp()).isNotNull();
     }
@@ -131,6 +151,5 @@ class GlobalExceptionHandlerTest {
 
     @SuppressWarnings("unused")
     private static void dummyValidationEndpoint(ClienteRequestDTO dto) {
-       
     }
 }

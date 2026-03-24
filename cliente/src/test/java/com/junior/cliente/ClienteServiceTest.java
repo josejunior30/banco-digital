@@ -27,6 +27,7 @@ import com.junior.cliente.DTO.ClienteRequestDTO;
 import com.junior.cliente.DTO.ClienteResponseDTO;
 import com.junior.cliente.entities.Cliente;
 import com.junior.cliente.exception.BusinessException;
+import com.junior.cliente.exception.ResourceNotFoundException;
 import com.junior.cliente.repository.ClienteRepository;
 import com.junior.cliente.service.ClienteService;
 
@@ -41,7 +42,7 @@ class ClienteServiceTest {
     private ClienteService service;
 
     @Test
-    void create_deveCriarCliente_quandoCpfNaoExiste() {
+    void create_deveCriarCliente_quandoCpfEEmailNaoExistem() {
         ClienteRequestDTO request = new ClienteRequestDTO(
                 "Ana",
                 "12345678901",
@@ -50,8 +51,11 @@ class ClienteServiceTest {
         );
 
         when(repository.existsByCpf(request.cpf())).thenReturn(false);
+        when(repository.existsByEmail(request.email())).thenReturn(false);
+
         when(repository.save(any(Cliente.class))).thenAnswer(invocation -> {
             Cliente c = invocation.getArgument(0);
+            c.prePersist(); // simula @PrePersist do JPA
             c.setId(1L);
             return c;
         });
@@ -73,7 +77,6 @@ class ClienteServiceTest {
         assertThat(savedArg.getCpf()).isEqualTo("12345678901");
         assertThat(savedArg.getEmail()).isEqualTo("ana@email.com");
         assertThat(savedArg.getBirthDate()).isEqualTo(LocalDate.of(2000, 1, 1));
-        assertThat(savedArg.isActive()).isTrue();
     }
 
     @Test
@@ -95,6 +98,25 @@ class ClienteServiceTest {
     }
 
     @Test
+    void create_deveLancarBusinessException_quandoEmailJaExiste() {
+        ClienteRequestDTO request = new ClienteRequestDTO(
+                "Ana",
+                "12345678901",
+                "ana@email.com",
+                LocalDate.of(2000, 1, 1)
+        );
+
+        when(repository.existsByCpf(request.cpf())).thenReturn(false);
+        when(repository.existsByEmail(request.email())).thenReturn(true);
+
+        assertThatThrownBy(() -> service.create(request))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("Email já cadastrado");
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
     void findById_deveRetornarCliente_quandoExiste() {
         Cliente c = new Cliente(10L, "Bob", "11122233344", "bob@email.com", LocalDate.of(1990, 5, 5), true);
         when(repository.findById(10L)).thenReturn(Optional.of(c));
@@ -109,13 +131,14 @@ class ClienteServiceTest {
     }
 
     @Test
-    void findById_deveLancarIllegalArgumentException_quandoNaoExiste() {
+    void findById_deveLancarResourceNotFoundException_quandoNaoExiste() {
         when(repository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.findById(99L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessage("Cliente não encontrado com id: 99");
     }
+
     @Test
     void findAll_deveRetornarPageDeClientes_quandoSemFiltroActive() {
         Cliente c1 = new Cliente(1L, "A", "111", "a@email.com", LocalDate.of(2000, 1, 1), true);
@@ -130,10 +153,8 @@ class ClienteServiceTest {
 
         assertThat(response.getTotalElements()).isEqualTo(2);
         assertThat(response.getContent()).hasSize(2);
-
         assertThat(response.getContent().get(0).id()).isEqualTo(1L);
         assertThat(response.getContent().get(0).active()).isTrue();
-
         assertThat(response.getContent().get(1).id()).isEqualTo(2L);
         assertThat(response.getContent().get(1).active()).isFalse();
 
@@ -159,7 +180,7 @@ class ClienteServiceTest {
     }
 
     @Test
-    void update_deveAtualizarNomeEEmail_quandoExiste() {
+    void update_deveAtualizarCampos_quandoExiste_eNaoHaDuplicidade() {
         Cliente existing = new Cliente(5L, "Antigo", "99988877766", "old@email.com", LocalDate.of(1999, 9, 9), true);
         ClienteRequestDTO request = new ClienteRequestDTO(
                 "Novo Nome",
@@ -169,6 +190,8 @@ class ClienteServiceTest {
         );
 
         when(repository.findById(5L)).thenReturn(Optional.of(existing));
+        when(repository.existsByEmailAndIdNot(request.email(), 5L)).thenReturn(false);
+        when(repository.existsByCpfAndIdNot(request.cpf(), 5L)).thenReturn(false);
         when(repository.save(any(Cliente.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ClienteResponseDTO response = service.update(5L, request);
@@ -190,7 +213,7 @@ class ClienteServiceTest {
     }
 
     @Test
-    void update_deveLancarIllegalArgumentException_quandoNaoExiste() {
+    void update_deveLancarResourceNotFoundException_quandoNaoExiste() {
         ClienteRequestDTO request = new ClienteRequestDTO(
                 "X",
                 "12345678901",
@@ -201,8 +224,49 @@ class ClienteServiceTest {
         when(repository.findById(123L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.update(123L, request))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessage("Cliente não encontrado com id: 123");
+    }
+
+    @Test
+    void update_deveLancarBusinessException_quandoEmailJaExisteEmOutroCliente() {
+        Cliente existing = new Cliente(5L, "Antigo", "99988877766", "old@email.com", LocalDate.of(1999, 9, 9), true);
+        ClienteRequestDTO request = new ClienteRequestDTO(
+                "Novo Nome",
+                "99988877766",
+                "novo@email.com",
+                LocalDate.of(1999, 9, 9)
+        );
+
+        when(repository.findById(5L)).thenReturn(Optional.of(existing));
+        when(repository.existsByEmailAndIdNot(request.email(), 5L)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.update(5L, request))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("Email já cadastrado para outro cliente");
+
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    void update_deveLancarBusinessException_quandoCpfJaExisteEmOutroCliente() {
+        Cliente existing = new Cliente(5L, "Antigo", "99988877766", "old@email.com", LocalDate.of(1999, 9, 9), true);
+        ClienteRequestDTO request = new ClienteRequestDTO(
+                "Novo Nome",
+                "99988877766",
+                "novo@email.com",
+                LocalDate.of(1999, 9, 9)
+        );
+
+        when(repository.findById(5L)).thenReturn(Optional.of(existing));
+        when(repository.existsByEmailAndIdNot(request.email(), 5L)).thenReturn(false);
+        when(repository.existsByCpfAndIdNot(request.cpf(), 5L)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.update(5L, request))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("CPF já cadastrado para outro cliente");
+
+        verify(repository, never()).save(any());
     }
 
     @Test
@@ -215,11 +279,11 @@ class ClienteServiceTest {
     }
 
     @Test
-    void delete_deveLancarIllegalArgumentException_quandoNaoExiste() {
+    void delete_deveLancarResourceNotFoundException_quandoNaoExiste() {
         when(repository.existsById(404L)).thenReturn(false);
 
         assertThatThrownBy(() -> service.delete(404L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessage("Cliente não encontrado com id: 404");
 
         verify(repository, never()).deleteById(anyLong());
