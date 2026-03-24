@@ -17,4 +17,8 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 			where (:active is null or c.active = :active)
 			""")
 	Page<Cliente> findAllFiltered(@Param("active") Boolean active, Pageable pageable);
+	
+	boolean existsByEmail(String email);
+	boolean existsByEmailAndIdNot(String email, Long id);
+	boolean existsByCpfAndIdNot(String cpf, Long id);
 }

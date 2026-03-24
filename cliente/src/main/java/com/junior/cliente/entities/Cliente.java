@@ -27,7 +27,7 @@ public class Cliente {
 	@Column(nullable = false)
 	private LocalDate birthDate;
 	@Column(nullable = false)
-	private boolean active = true;
+	private boolean active;
 
 	@PrePersist
 	public void prePersist() {
