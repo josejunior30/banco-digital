@@ -1,0 +1,17 @@
+{"properties": [
+  {
+    "name": "+springdoc.swagger-ui.path",
+    "type": "java.lang.String",
+    "description": "A description for '+springdoc.swagger-ui.path'"
+  },
+  {
+    "name": "+springdoc.swagger-ui.operations-sorter",
+    "type": "java.lang.String",
+    "description": "A description for '+springdoc.swagger-ui.operations-sorter'"
+  },
+  {
+    "name": "+springdoc.swagger-ui.tags-sorter",
+    "type": "java.lang.String",
+    "description": "A description for '+springdoc.swagger-ui.tags-sorter'"
+  }
+]}

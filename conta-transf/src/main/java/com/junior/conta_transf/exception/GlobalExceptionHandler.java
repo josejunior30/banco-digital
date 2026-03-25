@@ -120,7 +120,7 @@ public class GlobalExceptionHandler {
      );
  }
 
- // ✅ evita cair no handleGeneric e virar 500 quando não existe endpoint/arquivo
+ 
  @ExceptionHandler({ NoHandlerFoundException.class, NoResourceFoundException.class })
  public ResponseEntity<ApiError> handleNotFound(Exception ex, HttpServletRequest request) {
      return build(

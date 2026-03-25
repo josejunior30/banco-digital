@@ -20,8 +20,12 @@ import com.junior.conta_transf.DTO.ContaResponseDTO;
 import com.junior.conta_transf.entities.Conta;
 import com.junior.conta_transf.service.ContaService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/contas")
+@Tag(name = "Contas", description = "Operações de abertura/manutenção de contas")
 public class ContaController {
 	
 	private final ContaService service;
@@ -31,24 +35,28 @@ public class ContaController {
 	}
 
 	@GetMapping
+	@Operation(summary = "Listar contas (paginado)")
 	public ResponseEntity<Page<ContaResponseDTO>> findAll(@PageableDefault(size = 20, sort = "id") Pageable pageable) {
 		Page<ContaResponseDTO> page = service.findAll(pageable);
 		return ResponseEntity.ok(page);
 	}
 
 	@GetMapping("/{id}")
+	@Operation(summary = "Buscar conta por id")
 	public ResponseEntity<ContaResponseDTO> findById(@PathVariable Long id) {
 		ContaResponseDTO dto = service.findById(id);
 		return ResponseEntity.ok(dto);
 	}
 
 	@DeleteMapping("/{id}")
+	@Operation(summary = "Remover conta")
 	public ResponseEntity<Void> delete(@PathVariable Long id) {
 		service.delete(id);
 		return ResponseEntity.noContent().build();
 	}
 
 	@PostMapping
+	@Operation(summary = "Criar conta")
 	public ResponseEntity<ContaResponseDTO> create(@RequestBody ContaRequestDTO request) {
 		Conta conta = service.create(request);
 
@@ -60,6 +68,7 @@ public class ContaController {
 	}
 
 	@PatchMapping("/{id}")
+	@Operation(summary = "Atualizar tipo/status da conta")
 	public ResponseEntity<ContaResponseDTO> patchTypeStatus(@PathVariable Long id,
 			@RequestBody ContaPatchRequestDTO request) {
 		Conta updated = service.patchTypeStatus(id, request);
