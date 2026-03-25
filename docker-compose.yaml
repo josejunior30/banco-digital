@@ -1,0 +1,26 @@
+services:
+  cliente:
+    build:
+      context: ./cliente
+      dockerfile: Dockerfile.yaml
+    container_name: banco-digital-cliente
+    environment:
+      APP_PROFILE: test
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  conta-transf:
+    build:
+      context: ./conta-transf
+      dockerfile: Dockerfile.yaml
+    container_name: banco-digital-conta-transf
+    depends_on:
+      - cliente
+    environment:
+      APP_PROFILE: test
+      CUSTOMER_SERVICE_URL: http://cliente:8080
+
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
