@@ -2,25 +2,39 @@ services:
   cliente:
     build:
       context: ./cliente
-      dockerfile: Dockerfile.yaml
+      dockerfile: Dockerfile
     container_name: banco-digital-cliente
     environment:
-      APP_PROFILE: test
+      SPRING_PROFILES_ACTIVE: test
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
     ports:
       - "8080:8080"
+    depends_on:
+      - rabbitmq
     restart: unless-stopped
 
   conta-transf:
     build:
       context: ./conta-transf
-      dockerfile: Dockerfile.yaml
+      dockerfile: Dockerfile
     container_name: banco-digital-conta-transf
     depends_on:
       - cliente
     environment:
-      APP_PROFILE: test
+      SPRING_PROFILES_ACTIVE: test
       CUSTOMER_SERVICE_URL: http://cliente:8080
-
     ports:
       - "8081:8081"
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: banco-digital-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     restart: unless-stopped

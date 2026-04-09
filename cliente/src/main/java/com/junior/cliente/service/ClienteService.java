@@ -1,19 +1,20 @@
 package com.junior.cliente.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.junior.cliente.DTO.ClienteCriadoEvent;
 import com.junior.cliente.DTO.ClienteRequestDTO;
 import com.junior.cliente.DTO.ClienteResponseDTO;
 import com.junior.cliente.entities.Cliente;
 import com.junior.cliente.exception.BusinessException;
 import com.junior.cliente.exception.ResourceNotFoundException;
+import com.junior.cliente.messaging.ClienteEventProducer;
 import com.junior.cliente.repository.ClienteRepository;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 @Service
@@ -21,11 +22,14 @@ public class ClienteService {
 
 	private static final Logger log = LoggerFactory.getLogger(ClienteService.class);
 
-	private final ClienteRepository repository;
+	   private final ClienteRepository repository;
+	    private final ClienteEventProducer eventProducer;
 
-	public ClienteService(ClienteRepository repository) {
-		this.repository = repository;
-	}
+	    public ClienteService(ClienteRepository repository, ClienteEventProducer eventProducer) {
+	        this.repository = repository;
+	        this.eventProducer = eventProducer;
+	    }
+
 
 	@Transactional
 	public ClienteResponseDTO create(ClienteRequestDTO request) {
@@ -48,6 +52,17 @@ public class ClienteService {
 		cliente.setBirthDate(request.birthDate());
 
 		Cliente saved = repository.save(cliente);
+		
+		eventProducer.publicarClienteCriado(
+                new ClienteCriadoEvent(
+                        saved.getId(),
+                        saved.getName(),
+                        saved.getCpf(),
+                        saved.getEmail(),
+                        saved.getBirthDate(),
+                        saved.isActive()
+                )
+                );
 
 		log.info("create - cliente criado com sucesso id={} cpf={} email={}",
 				saved.getId(), saved.getCpf(), saved.getEmail());
