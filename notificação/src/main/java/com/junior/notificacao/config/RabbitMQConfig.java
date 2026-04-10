@@ -16,17 +16,17 @@ public class RabbitMQConfig {
     public static final String ROUTING_KEY = "cliente.criado";
 
     @Bean
-    public DirectExchange clienteExchange() {
+    DirectExchange clienteExchange() {
         return new DirectExchange(EXCHANGE);
     }
 
     @Bean
-    public Queue clienteNotificacaoQueue() {
+    Queue clienteNotificacaoQueue() {
         return QueueBuilder.durable(QUEUE).build();
     }
 
     @Bean
-    public Binding clienteBinding(Queue clienteNotificacaoQueue, DirectExchange clienteExchange) {
+    Binding clienteBinding(Queue clienteNotificacaoQueue, DirectExchange clienteExchange) {
         return BindingBuilder
                 .bind(clienteNotificacaoQueue)
                 .to(clienteExchange)

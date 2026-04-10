@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMessageConfig {
 
     @Bean
-    public MessageConverter messageConverter() {
+    MessageConverter messageConverter() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         return new Jackson2JsonMessageConverter(objectMapper);
