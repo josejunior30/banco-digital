@@ -52,6 +52,7 @@ Mais do que um CRUD, este repositório mostra uma base sólida para evoluir um s
 banco-digital/
 ├── cliente/          # Microsserviço responsável pelo cadastro e gestão de clientes
 ├── conta-transf/     # Microsserviço responsável pela gestão de contas
+├── notificação/      # Microsserviço responsável pelo consumo de eventos e envio de notificações
 └── docker-compose.yaml
 ```
 
@@ -105,6 +106,17 @@ Responsável pela abertura e manutenção de contas bancárias.
 - Geração de número de conta com algoritmo de validação
 
 ---
+## Mensageria com RabbitMQ
+
+O projeto utiliza **RabbitMQ** como broker de mensagens para comunicação assíncrona entre os microsserviços, desacoplando ações como o cadastro de clientes do envio de notificações.
+
+- **Broker**: RabbitMQ 3 (imagem `rabbitmq:3-management`)
+- O serviço **cliente** publica eventos na fila
+- O serviço **notificação** consome esses eventos e processa o envio das notificações
+- **Management UI** disponível em `http://localhost:15672` (usuário/senha padrão: `guest` / `guest`)
+- Portas expostas: `5672` (AMQP) e `15672` (painel de administração)
+
+Essa abordagem evita chamadas síncronas diretas para ações que não precisam de resposta imediata, aumentando a resiliência entre os serviços.
 ## Estratégia de testes
 
 O projeto também evidencia preocupação com qualidade de software por meio de testes automatizados em diferentes camadas.
@@ -147,6 +159,7 @@ O projeto também evidencia preocupação com qualidade de software por meio de 
 - Docker
 - Docker Compose
 - Maven Wrapper
+- RabbitMQ (mensageria)
 
 ---
 
@@ -320,7 +333,6 @@ Algumas evoluções naturais para este projeto:
 - extrato bancário
 - testes de integração com Testcontainers
 - persistência em PostgreSQL
-- mensageria para eventos financeiros
 - pipeline CI/CD
 - monitoramento com Prometheus + Grafana
 
